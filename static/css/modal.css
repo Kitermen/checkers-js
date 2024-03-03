@@ -1,0 +1,46 @@
+.wait-player-cont, .wait-move-cont{
+    width: 600px;
+    height: 1200px;
+    position: absolute;
+    top: 90px;
+    left: 50%;
+    margin-left: -300px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.wait-player-cont div, .wait-move-cont div{
+    text-align: center;
+    width: fit-content;
+    padding: 10px;
+    color: lightsalmon;
+    font-size: 23px;
+    border: 3px solid lightsalmon;
+    border-radius: 13px;
+}
+
+.wait-player-cont .ajax-progress{
+    width: 200px;
+    margin-top: 650px;
+    height: 26.4px;
+    border-radius: 26.4px;
+    background: linear-gradient(#ffa07a 0 0) left/0% 100% no-repeat #dbdcef;
+    animation: progress-c2d4ps 2s infinite steps(10);
+}
+ 
+ @keyframes progress-c2d4ps {
+    100% {
+       background-size: 140% 100%;
+    }
+}
+
+.wait-move-cont div.timer{
+    color: #ffa07a;
+    font-size: 45px;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 640px;
+    padding: 15px 20px;
+}

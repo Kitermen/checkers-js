@@ -1,0 +1,440 @@
+class Game {
+    constructor() {
+        this.playerReady = false
+        this.kolorgracza = null
+        this.scene = new THREE.Scene();
+        
+        this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+        this.camera.position.set(300, 200, 0)
+        this.camera.lookAt(this.scene.position)
+        
+        this.renderer = new THREE.WebGLRenderer()
+        this.renderer.setClearColor(0x000000)
+        this.renderer.setSize(window.innerWidth, window.innerHeight)
+        
+        document.getElementById("root").append(this.renderer.domElement)
+
+        this.container = new THREE.Object3D()
+        this.scene.add(this.container)
+        this.container2 = new THREE.Object3D()
+        this.scene.add(this.container2)
+        this.borderContainer = new THREE.Object3D()
+        this.scene.add(this.borderContainer)
+        this.lightContainer = new THREE.Object3D()
+        this.scene.add(this.lightContainer)
+        
+        this.container.position.set(-70, 0, -70)
+        this.container2.position.set(-70, 0, -70)
+        this.borderContainer.position.set(0, -2, 0)
+        this.lightContainer.position.set(0, 158, 0)
+        
+
+        window.addEventListener("resize", ()=>{
+            this.camera.aspect = window.innerWidth / window.innerHeight
+            this.camera.updateProjectionMatrix()
+            this.renderer.setSize(window.innerWidth, window.innerHeight)
+        })
+
+        this.orbitControl = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.orbitControl.addEventListener("change", ()=>{
+            this.renderer.render(this.scene, this.camera)
+        })
+            
+
+        this.pionki = [
+            [0, 2, 0, 2, 0, 2, 0, 2],
+            [2, 0, 2, 0, 2, 0, 2, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0]
+        ]
+
+        this.szachownica = [
+            [0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0]
+        ]
+
+        let pozycja = 20
+        for (let j = 0; j < this.szachownica.length; j += 1) {
+            for (let i = 0; i < this.szachownica.length; i += 1) {
+                let cube
+                this.szachownica[j][i] == 1 ? cube = new Tile("black", i, j) : cube = new Tile("white", i, j)
+                this.container.add(cube)
+                cube.position.x = pozycja * j
+                cube.position.z = pozycja * i
+            }
+        }
+        this.border = new Border()
+        this.borderContainer.add(this.border)
+
+        this.renderer.useLegacyLights = true;
+        this.light = new THREE.PointLight(0xffffff, 2);
+        this.scene.add(this.light);
+        this.light.position.set(0, 44, 0);
+
+        this.render()
+    }
+
+    render = () => {
+        requestAnimationFrame(this.render)
+        this.renderer.render(this.scene, this.camera)
+        TWEEN.update()
+    }
+    
+    renderpionki() {
+        this.container2.clear()
+        let pozycja = 20
+
+        for (let i = 0; i < this.pionki.length; i += 1) {
+            for (let j = 0; j < this.pionki.length; j += 1) {
+                let pawn
+                if (this.pionki[i][j] != 0) {
+                    this.pionki[i][j] == 1 ? pawn = new Pawn("black", i, j) : pawn = new Pawn("white", i, j)
+                    this.container2.add(pawn)
+                    pawn.position.x = pozycja * j
+                    pawn.position.z = pozycja * i
+                }
+            }
+        }
+    }
+    cameraset(pozycja) {
+        this.camera.position.set(pozycja.x, pozycja.y, pozycja.z)
+        this.camera.lookAt(this.scene.position)
+    }
+
+    klik() {
+        const raycaster = new THREE.Raycaster() // obiekt Raycastera symulujący "rzucanie" promieni
+        const mouseVector = new THREE.Vector2() // ten wektor czyli pozycja w przestrzeni 2D na ekranie(x,y) wykorzystany będzie do określenie pozycji myszy na ekranie, a potem przeliczenia na pozycje 3D
+        window.addEventListener("mousedown", (e) => {
+            mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1
+            mouseVector.y = -(e.clientY / window.innerHeight) * 2 + 1
+            raycaster.setFromCamera(mouseVector, this.camera);
+            const intersects = raycaster.intersectObjects(this.scene.children)
+            if (intersects.length > 0) {
+
+                if (this.playerReady == true) {
+                    if (this.kolorgracza == "white") {
+                        if (intersects[0].object.pawnOrTile == "pionek") {
+                            if (intersects[0].object.color == "white") {
+                                for (let i = 0; i < this.container2.children.length; i++) {
+                                    if (this.container2.children[i].material.color.getHex() == 0x00ff00) {
+                                        this.container2.children[i].material.color.setHex(0xeeeeee)
+                                    }
+                                }
+                                // this.container2.children.forEach(pawn => {
+                                //     if (pawn.material.color.getHex() == 0x00ff00) {
+                                //         pawn.material.color.setHex(0xeeeeee)
+                                //     }
+                                // });
+                                intersects[0].object.material.color.setHex(0x00ff00)
+                                this.ruchpionkow()
+
+                            }
+                        }
+                    }
+                    if (this.kolorgracza == "black") {
+                        if (intersects[0].object.pawnOrTile == "pionek") {
+                            if (intersects[0].object.color == "black") {
+                                for (let i = 0; i < this.container2.children.length; i++) {
+                                    if (this.container2.children[i].material.color.getHex() == 0x00ff00) {
+                                        this.container2.children[i].material.color.setHex(0x111111)
+                                    }
+                                }
+                                // this.container2.children.forEach(pawn => {
+                                //     if (pawn.material.color.getHex() == 0x00ff00) {
+                                //         pawn.material.color.setHex(0xeeeeee)
+                                //     }
+                                // });
+                                intersects[0].object.material.color.setHex(0x00ff00)
+                                this.ruchpionkow()
+                            }
+                        }
+                    }
+                    for (let i = 0; i < this.container2.children.length; i++) {
+                        if (this.container2.children[i].material.color.getHex() == 0x00ff00) {
+                            if (intersects[0].object.pawnOrTile == "pole") {
+                                if (intersects[0].object.material.color.getHex() == 0xffff00) {
+                                    new TWEEN.Tween(this.container2.children[i].position) // co
+                                        .to({ x: intersects[0].object.position.x, z: intersects[0].object.position.z }, 500) // do jakiej pozycji, w jakim czasie
+                                        .repeat(0) // liczba powtórzeń
+                                        .easing(TWEEN.Easing.Sinusoidal.Out) // typ easingu (zmiana w czasie)
+                                        .onComplete(() => {
+                                            if (this.kolorgracza == "white") {
+                                                this.container2.children[i].material.color.setHex(0xeeeeee)
+                                            }
+                                            else {
+                                                this.container2.children[i].material.color.setHex(0x111111)
+                                            }
+                                            net.emitowanie("exchange", [
+                                                {
+                                                    rodzaj: "przesuniecie",
+                                                    pozpoczr: this.container2.children[i].idr,
+                                                    pozkonr: intersects[0].object.idr,
+                                                    pozpoczc: this.container2.children[i].idc,
+                                                    pozkonc: intersects[0].object.idc
+
+                                                }
+                                            ])
+                                            this.pionki[intersects[0].object.idr][intersects[0].object.idc] = this.pionki[this.container2.children[i].idr][this.container2.children[i].idc]
+                                            this.pionki[this.container2.children[i].idr][this.container2.children[i].idc] = 0
+                                            this.container2.children[i].idr = intersects[0].object.idr
+                                            this.container2.children[i].idc = intersects[0].object.idc
+                                            console.log(this.pionki);
+                                            this.playerReady = false
+                                            this.odkolorywanie()
+                                            ui.zegarynka()
+                                        })// funkcja po zakończeniu animacji
+                                        .start()
+
+
+                                } else if (intersects[0].object.material.color.getHex() == 0xffa500) {
+                                    new TWEEN.Tween(this.container2.children[i].position) // co
+                                        .to({ x: intersects[0].object.position.x, z: intersects[0].object.position.z }, 500) // do jakiej pozycji, w jakim czasie
+                                        .repeat(0) // liczba powtórzeń
+                                        .easing(TWEEN.Easing.Sinusoidal.Out) // typ easingu (zmiana w czasie)
+                                        .onComplete(() => {
+                                            if (this.kolorgracza == "white") {
+                                                this.container2.children[i].material.color.setHex(0xeeeeee)
+                                            }
+                                            else {
+                                                this.container2.children[i].material.color.setHex(0x111111)
+                                            }
+                                            const pozbitr = (this.container2.children[i].idr + intersects[0].object.idr) / 2
+                                            const pozbitc = (this.container2.children[i].idc + intersects[0].object.idc) / 2
+                                            net.emitowanie("exchange", [
+                                                {
+                                                    rodzaj: "zbicie",
+                                                    pozpoczr: this.container2.children[i].idr,
+                                                    pozkonr: intersects[0].object.idr,
+                                                    pozpoczc: this.container2.children[i].idc,
+                                                    pozkonc: intersects[0].object.idc,
+                                                    pozbitr: pozbitr,
+                                                    pozbitc: pozbitc
+                                                }
+                                            ])
+                                            this.pionki[intersects[0].object.idr][intersects[0].object.idc] = this.pionki[this.container2.children[i].idr][this.container2.children[i].idc]
+                                            this.pionki[this.container2.children[i].idr][this.container2.children[i].idc] = 0
+                                            this.container2.children[i].idr = intersects[0].object.idr
+                                            this.container2.children[i].idc = intersects[0].object.idc
+                                            this.pionki[pozbitr][pozbitc] = 0
+                                            console.log(pozbitr);
+                                            console.log(pozbitc);
+                                            for (let j = 0; j < this.container2.children.length; j++) {
+                                                if (this.container2.children[j].idr == pozbitr && this.container2.children[j].idc == pozbitc) {
+                                                    this.container2.children[j].removeFromParent()
+                                                }
+                                            }
+                                            console.log(this.pionki);
+                                            this.playerReady = false
+                                            this.odkolorywanie()
+                                            ui.zegarynka()
+                                        })// funkcja po zakończeniu animacji
+                                        .start()
+                                }
+                            }
+                        }
+
+                    }
+                }
+            }
+        });
+
+    }
+    zmiany(zmiany) {
+        clearInterval(ui.counting)
+        ui.waitMoveCont.remove()
+        for (let i = 0; i < zmiany.length; i++) {
+            switch (zmiany[i].rodzaj) {
+                case "przesuniecie": {
+                    for (let j = 0; j < this.container2.children.length; j++) {
+                        if (this.container2.children[j].idr == zmiany[i].pozpoczr && this.container2.children[j].idc == zmiany[i].pozpoczc) {
+                            for (let k = 0; k < this.container.children.length; k++) {
+                                if (this.container.children[k].idr == zmiany[i].pozkonr && this.container.children[k].idc == zmiany[i].pozkonc) {
+
+                                    new TWEEN.Tween(this.container2.children[j].position) // co
+                                        .to({ x: this.container.children[k].position.x, z: this.container.children[k].position.z }, 500) // do jakiej pozycji, w jakim czasie
+                                        .repeat(0) // liczba powtórzeń
+                                        .easing(TWEEN.Easing.Sinusoidal.Out) // typ easingu (zmiana w czasie)
+                                        .onComplete(() => {
+                                            this.pionki[this.container.children[k].idr][this.container.children[k].idc] = this.pionki[this.container2.children[j].idr][this.container2.children[j].idc]
+                                            this.pionki[this.container2.children[j].idr][this.container2.children[j].idc] = 0
+                                            this.container2.children[j].idr = this.container.children[k].idr
+                                            this.container2.children[j].idc = this.container.children[k].idc
+                                            this.playerReady = true
+                                            console.log(this.pionki);
+                                        })// funkcja po zakończeniu animacji
+                                        .start()
+                                    break
+                                }
+                            }
+                            break
+                        }
+                    }
+                }
+
+                    break
+                case "zbicie": {
+                    for (let j = 0; j < this.container2.children.length; j++) {
+                        if (this.container2.children[j].idr == zmiany[i].pozpoczr && this.container2.children[j].idc == zmiany[i].pozpoczc) {
+                            for (let k = 0; k < this.container.children.length; k++) {
+                                if (this.container.children[k].idr == zmiany[i].pozkonr && this.container.children[k].idc == zmiany[i].pozkonc) {
+
+                                    new TWEEN.Tween(this.container2.children[j].position) // co
+                                        .to({ x: this.container.children[k].position.x, z: this.container.children[k].position.z }, 500) // do jakiej pozycji, w jakim czasie
+                                        .repeat(0) // liczba powtórzeń
+                                        .easing(TWEEN.Easing.Sinusoidal.Out) // typ easingu (zmiana w czasie)
+                                        .onComplete(() => {
+
+                                            this.pionki[this.container.children[k].idr][this.container.children[k].idc] = this.pionki[this.container2.children[j].idr][this.container2.children[j].idc]
+                                            this.pionki[this.container2.children[j].idr][this.container2.children[j].idc] = 0
+                                            this.pionki[zmiany[i].pozbitr][zmiany[i].pozbitc] = 0
+                                            this.container2.children[j].idr = this.container.children[k].idr
+                                            this.container2.children[j].idc = this.container.children[k].idc
+                                            for (let m = 0; m < this.container2.children.length; m++) {
+                                                if (this.container2.children[m].idr == zmiany[i].pozbitr && this.container2.children[m].idc == zmiany[i].pozbitc) {
+                                                    this.container2.children[m].removeFromParent()
+                                                }
+                                            }
+                                            this.playerReady = true
+                                            console.log(this.pionki);
+                                        })// funkcja po zakończeniu animacji
+                                        .start()
+                                    break
+                                }
+                            }
+                            break
+                        }
+                    }
+                }
+            }
+        }
+        if (zmiany.length == 0) {
+            this.playerReady = true
+        }
+    }
+    ruchpionkow() {
+        this.odkolorywanie()
+        for (let i = 0; i < this.container2.children.length; i++) {
+            if (this.container2.children[i].material.color.getHex() == 0x00ff00) {
+                this.pionek = this.container2.children[i]
+                console.log(this.pionek.idr);
+                console.log(this.pionek.idc);
+                if (this.pionek.color == "white") {
+                    if (this.pionek.idr + 1 < this.pionki.length && this.pionek.idc - 1 >= 0) {
+                        if (this.pionki[this.pionek.idr + 1][this.pionek.idc - 1] == 0) {
+                            for (let k = 0; k < this.container.children.length; k++) {
+                                if (this.container.children[k].idr == this.pionek.idr + 1 && this.container.children[k].idc == this.pionek.idc - 1) {
+                                    this.container.children[k].material.color.setHex(0xffff00)
+                                }
+                            }
+                        } else if (this.pionki[this.pionek.idr + 1][this.pionek.idc - 1] == 1) {
+                            if (this.pionek.idr + 2 < this.pionki.length && this.pionek.idc - 2 < this.pionki.length) {
+                                if (this.pionki[this.pionek.idr + 2][this.pionek.idc - 2] == 0) {
+                                    for (let k = 0; k < this.container.children.length; k++) {
+                                        if (this.container.children[k].idr == this.pionek.idr + 2 && this.container.children[k].idc == this.pionek.idc - 2) {
+                                            this.container.children[k].material.color.setHex(0xffa500)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (this.pionek.idr + 1 < this.pionki.length && this.pionek.idc + 1 < this.pionki.length) {
+                        if (this.pionki[this.pionek.idr + 1][this.pionek.idc + 1] == 0) {
+                            for (let k = 0; k < this.container.children.length; k++) {
+                                if (this.container.children[k].idr == this.pionek.idr + 1 && this.container.children[k].idc == this.pionek.idc + 1) {
+                                    this.container.children[k].material.color.setHex(0xffff00)
+                                }
+                            }
+                        } else if (this.pionki[this.pionek.idr + 1][this.pionek.idc + 1] == 1) {
+                            if (this.pionek.idr + 2 < this.pionki.length && this.pionek.idc + 2 >= 0) {
+                                if (this.pionki[this.pionek.idr + 2][this.pionek.idc + 2] == 0) {
+                                    for (let k = 0; k < this.container.children.length; k++) {
+                                        if (this.container.children[k].idr == this.pionek.idr + 2 && this.container.children[k].idc == this.pionek.idc + 2) {
+                                            this.container.children[k].material.color.setHex(0xffa500)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } if (this.pionek.color == "black") {
+                    if (this.pionek.idr - 1 >= 0 && this.pionek.idc - 1 >= 0) {
+                        if (this.pionki[this.pionek.idr - 1][this.pionek.idc - 1] == 0) {
+                            for (let k = 0; k < this.container.children.length; k++) {
+                                if (this.container.children[k].idr == this.pionek.idr - 1 && this.container.children[k].idc == this.pionek.idc - 1) {
+                                    this.container.children[k].material.color.setHex(0xffff00)
+                                }
+                            }
+                        } else if (this.pionki[this.pionek.idr - 1][this.pionek.idc - 1] == 2) {
+                            if (this.pionek.idr - 2 >= 0 && this.pionek.idc - 2 >= 0) {
+                                if (this.pionki[this.pionek.idr - 2][this.pionek.idc - 2] == 0) {
+                                    for (let k = 0; k < this.container.children.length; k++) {
+                                        if (this.container.children[k].idr == this.pionek.idr - 2 && this.container.children[k].idc == this.pionek.idc - 2) {
+                                            this.container.children[k].material.color.setHex(0xffa500)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (this.pionek.idr - 1 >= 0 && this.pionek.idc + 1 < this.pionki.length) {
+                        if (this.pionki[this.pionek.idr - 1][this.pionek.idc + 1] == 0) {
+                            for (let k = 0; k < this.container.children.length; k++) {
+                                if (this.container.children[k].idr == this.pionek.idr - 1 && this.container.children[k].idc == this.pionek.idc + 1) {
+                                    this.container.children[k].material.color.setHex(0xffff00)
+                                }
+                            }
+                        } else if (this.pionki[this.pionek.idr - 1][this.pionek.idc + 1] == 2) {
+                            if (this.pionek.idr - 2 >= 0 && this.pionek.idc + 2 < this.pionki.length) {
+                                if (this.pionki[this.pionek.idr - 2][this.pionek.idc + 2] == 0) {
+                                    for (let k = 0; k < this.container.children.length; k++) {
+                                        if (this.container.children[k].idr == this.pionek.idr - 2 && this.container.children[k].idc == this.pionek.idc + 2) {
+                                            this.container.children[k].material.color.setHex(0xffa500)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+    odkolorywanie() {
+        for (let k = 0; k < this.container.children.length; k++) {
+            if (this.container.children[k].material.color.getHex() == 0xffff00 || this.container.children[k].material.color.getHex() == 0xffa500) {
+                if (this.container.children[k].color == "white") {
+                    this.container.children[k].material.color.setHex(0xcccccc)
+                }
+                else {
+                    this.container.children[k].material.color.setHex(0x333333)
+                }
+            }
+        }
+    }
+
+    odkolorywaniepionkow() {
+        for (let k = 0; k < this.container2.children.length; k++) {
+            if (this.container2.children[k].material.color.getHex() == 0x00ff00) {
+                if (this.container2.children[k].color == "white") {
+                    this.container2.children[k].material.color.setHex(0xcccccc)
+                }
+                else {
+                    this.container2.children[k].material.color.setHex(0x333333)
+                }
+            }
+        }
+
+    }
+}

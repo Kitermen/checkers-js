@@ -1,0 +1,12 @@
+@import url("dialog.css");
+@import url("header.css");
+@import url("modal.css");
+
+* {
+    margin: 0px;
+    padding: 0px;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: monospace;
+}

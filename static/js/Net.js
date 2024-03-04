@@ -8,7 +8,7 @@ class Net {
             if (this.zalogowany == true) {
                 this.client.off("response")
                 ui.waitPlayerCont.remove()
-                this.emitowanie("response")
+                this.emitting("response")
                 game.klik()
                 this.gotowy = true
             }
@@ -23,15 +23,16 @@ class Net {
         this.client.on("reqexchange", () => {
             if (this.gotowy == true) {
                 game.pom = false
-                ui.zegarynka()
-                game.odkolorywanie()
-                game.odkolorywaniepionkow()
-                net.emitowanie("exchange", [])
+                ui.clockModal()
+                game.resetTilesColor()
+                game.resetPawnsColor()
+                net.emitting("exchange", [])
             }
         })
     }
 
-    emitowanie(zdarzenie, data) {
+    emitting(zdarzenie, data) {
+        console.log(zdarzenie, data);
         this.client.emit(zdarzenie, data)
     }
     

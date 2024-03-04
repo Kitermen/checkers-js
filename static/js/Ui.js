@@ -66,7 +66,7 @@ class Ui {
         }
 
     }
-    czekam() {
+    logModal() {
         this.waitPlayerCont = document.createElement("div")
         this.waitPlayerCont.classList.add("wait-player-cont")
         document.body.appendChild(this.waitPlayerCont)
@@ -77,10 +77,11 @@ class Ui {
 
         this.ajaxLoader = document.createElement("img")
         this.ajaxLoader.classList.add("ajax-progress")
+        this.ajaxLoader.src = "./gfx/ajax.gif"
         this.waitPlayerCont.appendChild(this.ajaxLoader)        
     }
 
-    zegarynka() {
+    clockModal() {
         this.waitMoveCont = document.createElement("div")
         this.waitMoveCont.classList.add("wait-move-cont")
         document.body.appendChild(this.waitMoveCont)
@@ -90,7 +91,7 @@ class Ui {
         this.waitMoveCont.classList.add("wait-move")
         this.waitMoveCont.appendChild(this.waitMove)
 
-        this.counter = 6
+        this.counter = 20
         this.timer = document.createElement("div")
         this.timer.classList.add("timer")
         this.timer.innerHTML = this.counter
@@ -101,12 +102,11 @@ class Ui {
             if (this.counter == 0) {
                 clearInterval(this.zeg)
                 this.waitMoveCont.remove()
-                net.emitowanie("reqexchange")
+                net.emitting("reqexchange")
                 return
             }
             this.timer.innerHTML = this.counter
         }, 1000)
-
     }
 }
 

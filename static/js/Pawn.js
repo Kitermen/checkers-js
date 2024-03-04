@@ -6,7 +6,7 @@ class Pawn extends THREE.Mesh {
         this.color = color
         this.idr = idr
         this.idc = idc
-        this.pawnOrTile = "pionek"
+        this.pawnOrTile = "pawn"
 
         this.geometry = new THREE.CylinderGeometry(7, 7, 8)
         this.material = new THREE.MeshPhongMaterial({

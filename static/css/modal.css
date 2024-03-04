@@ -21,13 +21,19 @@
     border-radius: 13px;
 }
 
-.wait-player-cont .ajax-progress{
+/* .wait-player-cont .ajax-progress{
     width: 200px;
     margin-top: 650px;
     height: 26.4px;
     border-radius: 26.4px;
     background: linear-gradient(#ffa07a 0 0) left/0% 100% no-repeat #dbdcef;
     animation: progress-c2d4ps 2s infinite steps(10);
+} */
+
+.ajax-progress{
+    width: 180px;
+    margin-top: 670px;
+    
 }
  
  @keyframes progress-c2d4ps {

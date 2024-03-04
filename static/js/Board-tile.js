@@ -6,7 +6,7 @@ class Tile extends THREE.Mesh {
         this.color = color
         this.idr = idr
         this.idc = idc
-        this.pawnOrTile = "pole"
+        this.pawnOrTile = "tile"
 
         this.geometry = new THREE.BoxGeometry(20, 2, 20)
         this.material = new THREE.MeshPhongMaterial({
